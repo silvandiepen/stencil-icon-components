@@ -12,10 +12,14 @@ let settings = {
     dest: path.join(argv.dest),
     filelist: [],
     files: [],
-    error: null
+    error: null,
+    options: {
+        removeOld: argv.removeOld ? true : false,
+        prefix: argv.prefix ? `${argv.prefix}-` : '' 
+    }
 };
 
-const fileName = (str) => path.basename(str).replace(path.extname(str),'');
+const fileName = (str) => `${settings.options.prefix}${path.basename(str).replace(path.extname(str),'')}`;
 const fileExtension = (str) => path.extname(str);
 const kebabCase = (str) =>str.match(/[A-Z]{2,}(?=[A-Z][a-z0-9]*|\b)|[A-Z]?[a-z0-9]*|[A-Z]|[0-9]+/g)
 .filter(Boolean)
@@ -23,10 +27,10 @@ const kebabCase = (str) =>str.match(/[A-Z]{2,}(?=[A-Z][a-z0-9]*|\b)|[A-Z]?[a-z0-
 .join('-') 
 
 
-           // If remove old is set, the destination folder will be removed in order to be sure all files are new. 
-           if(argv.removeOld){
-            rimraf(settings.dest, () => { console.log("done"); });
-        }
+// If remove old is set, the destination folder will be removed in order to be sure all files are new. 
+if(settings.options.removeOld){
+    rimraf(settings.dest, () => { console.log("Removed destination folder"); });
+}
 
 
 const getSrcFiles = async function(log){
@@ -59,10 +63,10 @@ const getFilesData = async function(){
         // Go through each file and write it to the settings.
         let files = [];
        
-        settings.filelist.forEach((fileName,i) => {
+        settings.filelist.forEach((srcFileName,i) => {
             try {
-              getFileData(fileName).then(fileData=>{
-                let file = { name: fileName, data: fileData};
+              getFileData(srcFileName).then(fileData=>{
+                let file = { name: kebabCase(fileName(srcFileName)), data: fileData};
                 settings.files.push(file);           
                });
              } catch(err){
@@ -71,10 +75,10 @@ const getFilesData = async function(){
         })
 
 }
-const getFileData = async function(fileName){
+const getFileData = async function(srcFileName){
     try {
         // let fileData = 'hoi';
-        return fsp.readFile(path.join(settings.src,fileName)).then(file=>{
+        return fsp.readFile(path.join(settings.src,srcFileName)).then(file=>{
             return file.toString();
         });
     } catch(err) {

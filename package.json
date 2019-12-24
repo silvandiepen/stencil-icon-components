@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"bin": "cli.js",
 	"scripts": {
-		"test": "node cli.js --src test/assets/icons/ --dest temp/components/icons/"
+		"test": "node cli.js --src test/assets/icons/ --dest temp/components/icons/ --prefix icon --remove-old"
 	},
 	"repository": {
 		"type": "git",
