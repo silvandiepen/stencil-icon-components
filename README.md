@@ -12,7 +12,7 @@ Add a command (script) to your package.json to create the components like;
 
 ```
     ...
-    "stencil:icons": "stencil-icon-components;
+    "stencil:icons": "stencil-icon-components --src assets/icons --dest src/components/icons",
     ...
 ```
 
