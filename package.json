@@ -27,6 +27,8 @@
 	"dependencies": {
 		"kleur": "^3.0.3",
 		"mkdirp": "^0.5.1",
+		"rimraf": "^3.0.0",
+		"svg-to-jsx": "^1.0.2",
 		"yargs": "^15.0.2"
 	}
 }

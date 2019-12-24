@@ -2,29 +2,32 @@
 const argv = require("yargs").argv;
 const path = require("path");
 const mkdirp = require('mkdirp');
+const rimraf = require("rimraf");
 const fsp = require("fs").promises;
-const { red, white, yellow, bgWhite, black, blue, green, bold, italic } = require('kleur');
+const svgtojsx = require('svg-to-jsx');
+const { red, yellow, bgWhite, blue, green, bold } = require('kleur');
 
 let settings = {
-	src: path.join(__dirname, argv.src),
-    dest: path.join(__dirname, argv.dest),
+	src: path.join(argv.src),
+    dest: path.join(argv.dest),
     filelist: [],
     files: [],
     error: null
 };
 
+const fileName = (str) => path.basename(str).replace(path.extname(str),'');
+const fileExtension = (str) => path.extname(str);
+const kebabCase = (str) =>str.match(/[A-Z]{2,}(?=[A-Z][a-z0-9]*|\b)|[A-Z]?[a-z0-9]*|[A-Z]|[0-9]+/g)
+.filter(Boolean)
+.map(x => x.toLowerCase())
+.join('-') 
 
 
+           // If remove old is set, the destination folder will be removed in order to be sure all files are new. 
+           if(argv.removeOld){
+            rimraf(settings.dest, () => { console.log("done"); });
+        }
 
-function fileName(filename) {
-    return path.basename(filename).replace(path.extname(filename),'');
-}
-function fileExtension(filename) {
-    return path.extname(fileName);
-}
-function kebabCase(value){
-    return value.replace(/\s+/g, '-').toLowerCase();
-}
 
 const getSrcFiles = async function(log){
 	try {
@@ -43,7 +46,7 @@ const getFileList = async function(){
     let files = await fsp.readdir(settings.src);
   
     files.forEach((fileName) => {
-        if (path.extname(fileName) == ".svg") {
+            if (path.extname(fileName) == ".svg") {
             try {
                 settings.filelist.push(fileName);
             } catch(err){
@@ -56,7 +59,7 @@ const getFilesData = async function(){
         // Go through each file and write it to the settings.
         let files = [];
        
-        await settings.filelist.forEach((fileName,i) => {
+        settings.filelist.forEach((fileName,i) => {
             try {
               getFileData(fileName).then(fileData=>{
                 let file = { name: fileName, data: fileData};
@@ -80,15 +83,8 @@ const getFileData = async function(fileName){
 }
 
 
-getSrcFiles(settings).then((result) => {
-	setTimeout(()=>{
-        logResult();
-    },1000)
-});
+getSrcFiles(settings).then((result) => setTimeout(()=>logResult(),1000));
 
-function buildFiles(){
-
-}
 function buildSpec(fileData){
 const file = `import { Icon } from './${kebabCase(fileName(fileData.name))}';
 
@@ -126,31 +122,35 @@ function buildCss(fileData){
     return file;    
 }
 function buildTsx(fileData){
-    const file = `import { Component, Host, h } from '@stencil/core';
+    svgtojsx(fileData.data).then(function(jsx) {
+        const file = `import { Component, Host, h } from '@stencil/core';
+    
 @Component({
   tag: 'icon-${kebabCase(fileName(fileData.name))}',
-  styleUrl: 'icon.css'
+  styleUrl: '${kebabCase(fileName(fileData.name))}.css'
 })
 export class Icon {
   render() {
-    return (${fileData.data});
+    return (${jsx});
   }
 }
 `;
-    return file;
+    return file;   
+    });
+
 }
 const writeComponent = async function(file){
     try {        
         console.log(`\t${green('✔')} ${file.name}`);
    
         // TSX
-        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.tsx'), buildTsx(file));
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), kebabCase(fileName(file.name)) + '.tsx'), buildTsx(file));
         // CSS
-        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.css'), buildCss(file));
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), kebabCase(fileName(file.name)) + '.css'), buildCss(file));
         // E2E
-        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.e2e.ts'), buildE2E(file));
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), kebabCase(fileName(file.name)) + '.e2e.ts'), buildE2E(file));
         // Spec
-        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.spec.ts'), buildSpec(file));
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), kebabCase(fileName(file.name)) + '.spec.ts'), buildSpec(file));
 
     } catch(err){
         console.log(`\t${red('×')} ${file.name} ${err}`);
@@ -166,6 +166,9 @@ function logResult() {
 	console.log("\n");
 
 	if (settings.src && settings.dest) {
+
+
+        
 
 		if (settings.files && settings.files.length > 0) console.log(`\tsrc:\t ${green().italic(argv.src)} `);
 		else console.log(`\tsrc:\t ${yellow().italic(argv.src)} ${red('Your source folder doesn\'t contain any') + red().bold(' .svg ') + red('files.')}`);
