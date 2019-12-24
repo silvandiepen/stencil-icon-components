@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const argv = require("yargs").argv;
 const path = require("path");
+const mkdirp = require('mkdirp');
 const fsp = require("fs").promises;
 const { red, white, yellow, bgWhite, black, blue, green, bold, italic } = require('kleur');
 
@@ -9,8 +10,21 @@ let settings = {
     dest: path.join(__dirname, argv.dest),
     filelist: [],
     files: [],
-	error: null
+    error: null
 };
+
+
+
+
+function fileName(filename) {
+    return path.basename(filename).replace(path.extname(filename),'');
+}
+function fileExtension(filename) {
+    return path.extname(fileName);
+}
+function kebabCase(value){
+    return value.replace(/\s+/g, '-').toLowerCase();
+}
 
 const getSrcFiles = async function(log){
 	try {
@@ -75,10 +89,10 @@ getSrcFiles(settings).then((result) => {
 function buildFiles(){
 
 }
-function buildSpec(){
-const file = `import { Icon } from './${fileName}';
+function buildSpec(fileData){
+const file = `import { Icon } from './${kebabCase(fileName(fileData.name))}';
 
-describe('icon-${fileName}', () => {
+describe('icon-${kebabCase(fileName(fileData.name))}', () => {
   it('builds', () => {
     expect(new Template()).toBeTruthy();
   });
@@ -87,64 +101,62 @@ describe('icon-${fileName}', () => {
 return file;
 
 }
-function builde2e(){
-    const file = `
-    import { newE2EPage } from '@stencil/core/testing';
+function buildE2E(fileData){
+    const file = `import { newE2EPage } from '@stencil/core/testing';
 
-    describe('icon-${fileName}', () => {
+    describe('icon-${kebabCase(fileName(fileData.name))}', () => {
       it('renders', async () => {
         const page = await newE2EPage();
-        await page.setContent('<icon-${fileName}></icon-${fileName}>');
+        await page.setContent('<icon-${kebabCase(fileName(fileData.name))}></icon-${kebabCase(fileName(fileData.name))}>');
     
-        const element = await page.find('icon-${fileName}');
+        const element = await page.find('icon-${kebabCase(fileName(fileData.name))}');
         expect(element).toHaveClass('hydrated');
       });
     });
 `;
 return file;    
 }
-function buildCss(){
-    const file = `
-        :host {
-            display: block;
-            width: 20px;
-            height: 20px;
-        }
+function buildCss(fileData){
+    const file = `:host {
+    display: block;
+    width: 20px;
+    height: 20px;
+}
 `;
     return file;    
 }
-function buildTsx(){
-    const file = `
-import { Component, Host, h } from '@stencil/core';
+function buildTsx(fileData){
+    const file = `import { Component, Host, h } from '@stencil/core';
 @Component({
-  tag: 'icon-${fileName}',
+  tag: 'icon-${kebabCase(fileName(fileData.name))}',
   styleUrl: 'icon.css'
 })
 export class Icon {
   render() {
-    return (${fileData});
+    return (${fileData.data});
   }
 }
 `;
     return file;
 }
-
 const writeComponent = async function(file){
-    try {
-        fsp.writeFile(path.join(settings.dest, file.name), file.data);
+    try {        
         console.log(`\t${green('✔')} ${file.name}`);
+   
+        // TSX
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.tsx'), buildTsx(file));
+        // CSS
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.css'), buildCss(file));
+        // E2E
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.e2e.ts'), buildE2E(file));
+        // Spec
+        fsp.writeFile(path.join(settings.dest, fileName(file.name), fileName(file.name) + '.spec.ts'), buildSpec(file));
+
     } catch(err){
         console.log(`\t${red('×')} ${file.name} ${err}`);
     }
 }
-const createFolder =  async function(){
-    try{
-        fsp.mkdir(settings.dest);
-        console.log(settings.dest, 'is created');
-    } catch(err) {
-        console.log('folder exists', err);
-    }    
-}
+
 
 function logResult() {
     // Log it all\
@@ -154,35 +166,25 @@ function logResult() {
 	console.log("\n");
 
 	if (settings.src && settings.dest) {
-		if (settings.files && settings.files.length > 0) {
-			console.log(`\tsrc:\t ${green().italic(argv.src)} `);
-		} else {
-			console.log(`\tsrc:\t ${yellow().italic(argv.src)} ${red('Your source folder doesn\'t contain any') + red().bold(' .svg ') + red('files.')}`);
-		}
-		console.log(`\tdest:\t ${green().italic(argv.dest)}`);
 
+		if (settings.files && settings.files.length > 0) console.log(`\tsrc:\t ${green().italic(argv.src)} `);
+		else console.log(`\tsrc:\t ${yellow().italic(argv.src)} ${red('Your source folder doesn\'t contain any') + red().bold(' .svg ') + red('files.')}`);
+		
+		console.log(`\tdest:\t ${green().italic(argv.dest)}`);
 		console.log(`\n`);
         
 		if (settings.files && settings.files.length > 0){
             console.log(`\t${bold('Files')} ${blue().bold('('+settings.files.length+')')}`);
-
-
-        	settings.files.forEach((file) => {
-				console.log(`\t${green('✔')} ${file.name}`);
-                // console.log(`\t${file.data}`);
-
-                // Create the folder if it doesn't exist yet.
-                // if (fsp.existsSync(settings.dest)) {
-                //     writeComponent(file);
-                // } else {
-                    createFolder()
-                    writeComponent(file);
-                // }
-
-
+        	settings.files.forEach((file,i) => {
+                mkdirp(path.join(settings.dest, fileName(file.name)), function(err) { 
+                    writeComponent(file); 
+                    
+                    if(settings.files.length == i+1) setTimeout(()=>{ console.log(`\n`)},10);
+                    
+                });
+                
 			});
-		} 
-		console.log(`\n`);
+        } 
 	} else {
 		console.log(`\tdefine --src and --dest`);
 		process.exit(1);
