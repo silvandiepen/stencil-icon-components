@@ -5,8 +5,8 @@ const mkdirp = require("mkdirp");
 const rimraf = require("rimraf");
 const SVGO = require("svgo");
 const fsp = require("fs").promises;
-const { red, yellow, bgWhite, blue, green, bold } = require("kleur");
 const BUILD = require("./build/files.js");
+const { red, yellow, bgWhite, blue, green, bold } = require("kleur");
 const { kebabCase, fileName } = require("./build/helpers.js");
 
 let settings = {
@@ -107,9 +107,9 @@ const buildFile = (file, ext, data) => {
 const writeComponent = async function(file) {
 	try {
 		buildFile(file, ".tsx", await BUILD.TSX(file, settings.options));
-		buildFile(file, ".css", await BUILD.CSS(file));
-		buildFile(file, ".e2e.ts", await BUILD.E2E(file));
-		buildFile(file, ".spec.ts", await BUILD.SPEC(file));
+		buildFile(file, ".css", await BUILD.CSS(file, settings.options));
+		buildFile(file, ".e2e.ts", await BUILD.E2E(file, settings.options));
+		buildFile(file, ".spec.ts", await BUILD.SPEC(file, settings.options));
 		console.log(`\t${green("✔")} ${file.name}`);
 	} catch (err) {
 		console.log(`\t${red("×")} ${file.name} ${err}`);
