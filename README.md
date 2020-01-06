@@ -6,14 +6,18 @@ To automatically create the source code for icon web components for a full folde
 
 ### Install
 
-`npm install stencil-icon-components`
+```bash
+npm install stencil-icon-components
+```
 
 Add a command (script) to your package.json to create the components like;
 
-```
+```json
+scripts: {
     ...
     "stencil:icons": "stencil-icon-components --src assets/icons --dest src/components/icons",
     ...
+}
 ```
 
 ### Options

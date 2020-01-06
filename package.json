@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"bin": "cli.js",
 	"scripts": {
-		"test": "node cli.js --src test/assets/icons/ --dest temp/components/icons/ --prefix icon --remove-old"
+		"test": "node cli.js --src test/assets/icons/ --dest temp/components/icons/ --prefix icon --remove-old --optimize"
 	},
 	"repository": {
 		"type": "git",
@@ -29,6 +29,8 @@
 		"mkdirp": "^0.5.1",
 		"rimraf": "^3.0.0",
 		"svg-to-jsx": "^1.0.2",
+		"svgo": "^1.3.2",
 		"yargs": "^15.0.2"
-	}
+	},
+	"devDependencies": {}
 }
