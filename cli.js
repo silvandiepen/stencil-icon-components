@@ -93,8 +93,8 @@ const getFileData = async function(srcFileName) {
 
 getSrcFiles(settings).then((result) => setTimeout(() => logResult(), 1000));
 
-const buildFile = (file, ext, data) => {
-	fsp.writeFile(
+const buildFile = async (file, ext, data) => {
+	await fsp.writeFile(
 		path.join(
 			settings.dest,
 			fileName(file.name),
@@ -106,10 +106,10 @@ const buildFile = (file, ext, data) => {
 
 const writeComponent = async function(file) {
 	try {
-		buildFile(file, ".tsx", await BUILD.TSX(file, settings.options));
-		buildFile(file, ".css", await BUILD.CSS(file, settings.options));
-		buildFile(file, ".e2e.ts", await BUILD.E2E(file, settings.options));
-		buildFile(file, ".spec.ts", await BUILD.SPEC(file, settings.options));
+		await buildFile(file, ".tsx", await BUILD.TSX(file, settings.options));
+		await buildFile(file, ".css", await BUILD.CSS(file, settings.options));
+		await buildFile(file, ".e2e.ts", await BUILD.E2E(file, settings.options));
+		await buildFile(file, ".spec.ts", await BUILD.SPEC(file, settings.options));
 		console.log(`\t${green("✔")} ${file.name}`);
 	} catch (err) {
 		console.log(`\t${red("×")} ${file.name} ${err}`);
