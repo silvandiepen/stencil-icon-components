@@ -15,4 +15,13 @@ const fileName = (str, settings = null) => {
 	else return `${path.basename(str).replace(path.extname(str), "")}`;
 };
 
-module.exports = { kebabCase, fileName };
+const PascalCase = (str) =>
+	str
+		.replace("-", " ")
+		.match(/[a-z]+/gi)
+		.map(function(word) {
+			return word.charAt(0).toUpperCase() + word.substr(1).toLowerCase();
+		})
+		.join("");
+
+module.exports = { kebabCase, fileName, PascalCase };

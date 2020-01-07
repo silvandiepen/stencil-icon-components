@@ -1,5 +1,5 @@
 const svgtojsx = require("svg-to-jsx");
-const { kebabCase, fileName } = require("./helpers.js");
+const { kebabCase, PascalCase, fileName } = require("./helpers.js");
 
 const BUILD = {};
 
@@ -54,17 +54,18 @@ svg{
 
 BUILD.TSX = async (fileData, options) => {
 	return await svgtojsx(fileData.data).then(function(jsx) {
+		const currentFileName = `${
+			options.prefix ? options.prefix : "icon-"
+		}${kebabCase(fileName(fileData.name))}`;
 		const file = `import { Component, Element, h, Host, Prop } from '@stencil/core';
     
 @Component({
-  tag: '${options.prefix ? options.prefix : "icon-"}${kebabCase(
-			fileName(fileData.name)
-		)}',
+  tag: '${currentFileName}',
   styleUrl: '${kebabCase(fileName(fileData.name))}.css'
 })
 
 
-export class Icon {
+export class ${PascalCase(currentFileName)} {
 
     @Prop() width: any;
     @Prop() height: any = this.width;
