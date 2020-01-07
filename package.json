@@ -1,6 +1,6 @@
 {
 	"name": "stencil-icon-components",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "Generate Icon Web Components for Stencil",
 	"main": "index.js",
 	"bin": "cli.js",
