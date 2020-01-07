@@ -18,7 +18,7 @@ const fileName = (str, settings = null) => {
 const PascalCase = (str) =>
 	str
 		.replace("-", " ")
-		.match(/[a-z]+/gi)
+		.match(/[a-Z0-9]+/gi)
 		.map(function(word) {
 			return word.charAt(0).toUpperCase() + word.substr(1).toLowerCase();
 		})
